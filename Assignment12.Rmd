@@ -1,0 +1,115 @@
+---
+title: "Assignment12"
+author: "James B"
+date: "17/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(palmerpenguins)
+library(PairedData)
+library(tibble)
+library(ggplot2)
+library(coin)
+library(rstatix)
+```
+
+# Part 1
+```{r part1, echo=FALSE}
+#function that takes a vector x and quantity u0 in the null hypothesis and returns cohen's d statistic for the data 
+effect_size_one_sample_t_test <- function(x, mu){
+  sample_mean <- mean(x, na.rm=TRUE) # calculate sample mean
+  sample_sd <- sd(x, na.rm=TRUE) # calculate sample sd
+  return((sample_mean-mu)/sample_sd) # calculate and return Cohen's d statistic
+}
+
+bill_adelie <- penguins %>%
+  filter(species=="Adelie") %>%
+  pull(bill_length_mm)
+
+effect_size_one_sample_t_test(bill_adelie, 40)
+```
+The output of the applied function of -0.4537835 suggests that the effect size is since negatively low to moderate, it is low to moderate since it is greater than 0.2 but less than 0.5. The effect is negative since the sample mean is less than the null hypothesis of 40, indicating that the penguins are smaller on average than the null hypothesis asserts in a low to moderate degree.
+
+# Part 2
+```{r part2, echo=FALSE}
+data("Barley")
+
+barley_df <- Barley %>% mutate(diff = Glabron-Velvet) #calculate the difference between the two columns for each value
+
+tibble(barley_df) %>% ggplot(aes(x=diff))+geom_density()+
+  theme_bw()+labs(x="Difference in weight (bushels?)", y="Density") # generate density plot of the differences
+
+tibble(barley_df) %>% ggplot(aes(sample=diff))+stat_qq()+
+  stat_qq_line(color="blue")+theme_bw() # generate a qqplot of the differences
+
+t.test(x=barley_df$Glabron, y=barley_df$Velvet, paired=TRUE, conf.level=0.99) # carry out a paired t test on the data using a significance level of 0.01
+
+y_bar <- mean(barley_df$diff) # sample differences mean
+y_sd <- sd(barley_df$diff) # sample differences sd
+effect_size <- y_bar / y_sd # effect size
+
+effect_size
+```
+Our assumptions are that the data is independently and individually distributed. We are performing the test on the differences of the two columns in question so using the generated graphs, despite having a noticeable positive skew, the data is fairly gaussian and so our assumptions hold in this case.
+
+Since the p value generated of 0.0118 is greater than the significance value of 0.01, we conclude that the null hypothesis: $H_0 = 0$ holds and we reject the alternative hypothesis of $H_1: u \not= 0$. We can fundamentally say in this case that there is no difference in the average yield of the two types of barley. 
+
+We assume that there are no significant outliers in the difference of the two groups, but given the display of data within the graphs, there does indeed seem to be an outlier that could have affected the results. Removing this outlier would have made our assumptions more valid.
+
+The Cohen's d statistic was 0.8698615 which would suggest a high significance if we did indeed find a significant result but in this case we did not.
+
+For this data a non parametric model may have been worth trying.
+
+# Part 3
+```{r part3, echo=FALSE}
+library(tidyr)
+
+data("Corn")
+wilcox.test(Corn$Crossed, Corn$Self, paired=TRUE, exact=TRUE) # perform wilcoxon test on the corn data
+
+v_val <- as.numeric(wilcox.test(Barley$Glabron, Barley$Velvet, paired=TRUE, exact=TRUE)$statistic) # perform again but extract V statistic on the barley data
+n <- dim(Barley)[1] # get sample size
+t_stat <- 2*v_val-(n*(n+1)/2) # compute t statistic from the obtained V value
+
+r_rank <- t_stat / (n * sqrt((n+1)*(2*n+1)/6)) # generate the final r rank
+r_rank
+
+barley_df <- Barley %>% pivot_longer(cols=c("Glabron", "Velvet"), names_to = "Barley_Type", values_to = "Yield")
+barley_df$IsGlabron <- ifelse(barley_df$Barley_Type=="Glabron", 1, 0)
+
+r_result <- barley_df %>% wilcox_effsize(Yield ~ IsGlabron, paired=TRUE) # generate the r rank using the rstatix package
+r_result
+```
+To perform a wilcox signed rank test the following assumptions are required:
+$X_1^0, ..., X_n^0$ are independently and identically distributed with continuous density $f_0$.
+Also that $X_1^1, ..., X_n^1$ is also independently and identically distributed with continuous density $f_1$.
+We further suppose that the null hypothesis of $f_0 = f_1$ holds. This is a flexible non-parametric setting which doesn't require strong assumptions on the distribution. We can assume the assumptions hold.
+
+The result of the wilcox test with a significance level of 0.05 produced a p value of 0.04126 meaning that we reject the null hypothesis $H_0: f_0(x) = f_1(x)$ and instead accept the alternative hypothesis $H_1: f_1(x) = f_0(x-\Delta)$ for some $\Delta \not= 0$. There is indeed a difference in the distributions of the heights of the two methods.
+
+The effect size generated indicates a high-medium effect in the positive direction since the value is 0.6114296, above 0.2 and above 0.5. As given earlier however, for the barley data there was no significant result found so the value calculated here has little bearing.
+
+The wilcox_effsize method returns an effect size of 0.875 which indicates a high positive effect, noticeably greater than the high-medium effect proudced using the manual method which is surprising.
+
+# Part 4
+```{r part4, echo=FALSE}
+wilcoxon_stats <- function(x, col1, col2){
+  V_stat <- as.numeric(wilcox.test(x[[col1]], x[[col2]], paired=TRUE, exact=TRUE)$statistic)
+  sample_size <- dim(x)[1]
+  T_stat <- 2*V_stat - sample_size*(sample_size+1)/2
+  effect_size <- T_stat / (sample_size * sqrt((sample_size+1)*(2*sample_size+1)/6))
+  
+  col_names_vect <- c("T_stat", "sample_size", "V_stat", "effect_size")
+  row <- c(T_stat, sample_size, V_stat, effect_size)
+  
+  df <- data.frame(matrix(ncol = length(col_names_vect), nrow=1))
+  colnames(df) <- col_names_vect
+  df[1,] <- row
+  return(tibble(df))
+}
+
+wilcoxon_stats(Corn, "Crossed", "Self")
+```
+
