@@ -412,33 +412,15 @@ summary {
 ## data:  Corn$Crossed and Corn$Self
 ## V = 96, p-value = 0.04126
 ## alternative hypothesis: true location shift is not equal to 0</code></pre>
-<pre><code>## Warning in wilcox.test.default(Barley$Glabron, Barley$Velvet, paired = TRUE, :
-## cannot compute exact p-value with ties</code></pre>
-<pre><code>## Warning in wilcox.test.default(Barley$Glabron, Barley$Velvet, paired = TRUE, :
-## cannot compute exact p-value with zeroes</code></pre>
-<pre><code>## [1] 12</code></pre>
-<pre><code>## [1] 0.6114296</code></pre>
-<pre><code>## # A tibble: 24 x 4
-##    Farm  Barley_Type Yield IsGlabron
-##    &lt;fct&gt; &lt;chr&gt;       &lt;int&gt;     &lt;dbl&gt;
-##  1 F01   Glabron        49         1
-##  2 F01   Velvet         42         0
-##  3 F02   Glabron        47         1
-##  4 F02   Velvet         47         0
-##  5 F03   Glabron        39         1
-##  6 F03   Velvet         38         0
-##  7 F04   Glabron        37         1
-##  8 F04   Velvet         32         0
-##  9 F05   Glabron        46         1
-## 10 F05   Velvet         41         0
-## # … with 14 more rows</code></pre>
+<pre><code>## [1] 0.5279296</code></pre>
 <pre><code>## # A tibble: 1 x 7
 ##   .y.   group1 group2 effsize    n1    n2 magnitude
 ## * &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;    &lt;dbl&gt; &lt;int&gt; &lt;int&gt; &lt;ord&gt;    
-## 1 Yield 0      1        0.875    12    12 large</code></pre>
+## 1 Yield 0      1        0.528    15    15 large</code></pre>
 <p>To perform a wilcox signed rank test the following assumptions are required: <span class="math inline">\(X_1^0, ..., X_n^0\)</span> are independently and identically distributed with continuous density <span class="math inline">\(f_0\)</span>. Also that <span class="math inline">\(X_1^1, ..., X_n^1\)</span> is also independently and identically distributed with continuous density <span class="math inline">\(f_1\)</span>. We further suppose that the null hypothesis of <span class="math inline">\(f_0 = f_1\)</span> holds. This is a flexible non-parametric setting which doesn’t require strong assumptions on the distribution. We can assume the assumptions hold.</p>
 <p>The result of the wilcox test with a significance level of 0.05 produced a p value of 0.04126 meaning that we reject the null hypothesis <span class="math inline">\(H_0: f_0(x) = f_1(x)\)</span> and instead accept the alternative hypothesis <span class="math inline">\(H_1: f_1(x) = f_0(x-\Delta)\)</span> for some <span class="math inline">\(\Delta \not= 0\)</span>. There is indeed a difference in the distributions of the heights of the two methods.</p>
 <p>The effect size generated indicates a high-medium effect in the positive direction since the value is 0.6114296, above 0.2 and above 0.5. As given earlier however, for the barley data there was no significant result found so the value calculated here has little bearing.</p>
+<p>The wilcox_effsize method returns an effect size of 0.875 which indicates a high positive effect, noticeably greater than the high-medium effect proudced using the manual method which is surprising.</p>
 </div>
 <div id="part-4" class="section level1">
 <h1>Part 4</h1>
